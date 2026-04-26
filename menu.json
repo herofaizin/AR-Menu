@@ -1,0 +1,50 @@
+{
+  "config": {
+    "name": "Warung Nusantara",
+    "tagline": "✦ AR Menu Experience",
+    "desc": "Arahkan kamera ke marker di meja untuk melihat hidangan favoritmu secara nyata sebelum memesan.",
+    "accent": "#C9A84C"
+  },
+  "items": [
+    {
+      "id": "item_1",
+      "name": "Nasi Goreng Spesial",
+      "category": "Makanan Utama",
+      "desc": "Nasi goreng dengan telur mata sapi, ayam crispy, dan sambal ijo khas rumahan.",
+      "price": "Rp 38.000",
+      "img": "https://images.unsplash.com/photo-1512058564366-18510be2db19?w=600&q=80",
+      "model": "assets/models/nasi-goreng.glb",
+      "marker": "assets/markers/hiro.patt"
+    },
+    {
+      "id": "item_2",
+      "name": "Sate Ayam Madura",
+      "category": "Makanan Utama",
+      "desc": "Sate ayam dengan bumbu kacang kental, dilengkapi lontong dan acar.",
+      "price": "Rp 45.000",
+      "img": "https://images.unsplash.com/photo-1529563021893-cc83c992d75d?w=600&q=80",
+      "model": "assets/models/sate-ayam.glb",
+      "marker": "assets/markers/hiro.patt"
+    },
+    {
+      "id": "item_3",
+      "name": "Es Teh Susu",
+      "category": "Minuman",
+      "desc": "Teh susu segar dengan tapioka premium, tersedia berbagai level gula.",
+      "price": "Rp 18.000",
+      "img": "https://images.unsplash.com/photo-1558857563-c6dd6e61d2c5?w=600&q=80",
+      "model": "assets/models/es-teh-susu.glb",
+      "marker": "assets/markers/hiro.patt"
+    },
+    {
+      "id": "item_4",
+      "name": "Klepon Ubi Ungu",
+      "category": "Dessert",
+      "desc": "Klepon dari ubi ungu berisi gula merah, digulung kelapa parut segar.",
+      "price": "Rp 22.000",
+      "img": "https://images.unsplash.com/photo-1541647376583-8934aaf3448a?w=600&q=80",
+      "model": "assets/models/klepon.glb",
+      "marker": "assets/markers/hiro.patt"
+    }
+  ]
+}

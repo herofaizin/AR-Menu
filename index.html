@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>AR Menu Viewer — FnB</title>
+
+  <!-- A-Frame & AR.js -->
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500&display=swap');
+
+    :root {
+      --gold: #C9A84C;
+      --gold-light: #F0D080;
+      --dark: #0D0D0D;
+      --surface: #161616;
+      --text: #F0EDE8;
+      --muted: #888;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--dark);
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* ────── LANDING PAGE ────── */
+    #landing {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #landing::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 70% 30%, rgba(201,168,76,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 20% 80%, rgba(201,168,76,0.07) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .grain {
+      position: fixed;
+      inset: 0;
+      opacity: 0.04;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    .brand-tag {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.3em;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      animation: fadeUp 0.8s ease both;
+    }
+
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.8rem, 8vw, 5.5rem);
+      line-height: 1.05;
+      text-align: center;
+      margin-bottom: 1.5rem;
+      animation: fadeUp 0.8s 0.1s ease both;
+    }
+
+    h1 span { color: var(--gold); }
+
+    .subtitle {
+      font-size: 1rem;
+      color: var(--muted);
+      text-align: center;
+      max-width: 420px;
+      line-height: 1.7;
+      margin-bottom: 3rem;
+      animation: fadeUp 0.8s 0.2s ease both;
+    }
+
+    /* ────── MENU GRID ────── */
+    #menu-section {
+      padding: 4rem 2rem 6rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.3em;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      margin-bottom: 0.5rem;
+    }
+
+    .section-desc {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 3rem;
+      max-width: 500px;
+      line-height: 1.6;
+    }
+
+    .category-tabs {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 2.5rem;
+    }
+
+    .tab {
+      padding: 0.45rem 1.1rem;
+      border-radius: 100px;
+      border: 1px solid rgba(201,168,76,0.25);
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.25s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .tab:hover, .tab.active {
+      background: var(--gold);
+      color: var(--dark);
+      border-color: var(--gold);
+      font-weight: 500;
+    }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .menu-card {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+      position: relative;
+    }
+
+    .menu-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(201,168,76,0.2);
+    }
+
+    .menu-card.hidden { display: none; }
+
+    .card-img {
+      width: 100%;
+      height: 180px;
+      background: #1e1e1e;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s;
+    }
+    .menu-card:hover .card-img img { transform: scale(1.05); }
+
+    .ar-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: var(--gold);
+      color: var(--dark);
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      padding: 4px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+
+    .no-img-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      color: #444;
+      font-size: 0.75rem;
+    }
+
+    .no-img-placeholder svg {
+      width: 48px;
+      height: 48px;
+      opacity: 0.3;
+    }
+
+    .card-body { padding: 1.1rem 1.2rem 1.3rem; }
+
+    .card-cat {
+      font-size: 0.68rem;
+      letter-spacing: 0.2em;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+
+    .card-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .card-desc {
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.55;
+      margin-bottom: 0.9rem;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-price {
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--gold-light);
+    }
+
+    .btn-ar {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 0.9rem;
+      border-radius: 8px;
+      background: var(--gold);
+      color: var(--dark);
+      font-size: 0.78rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .btn-ar:hover {
+      background: var(--gold-light);
+      transform: scale(1.04);
+    }
+
+    /* ────── AR MODAL ────── */
+    #ar-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(0,0,0,0.95);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    #ar-modal.open { display: flex; }
+
+    .ar-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.5rem;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+      z-index: 10;
+    }
+
+    .ar-item-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      color: #fff;
+    }
+
+    .btn-close {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #fff;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    .btn-close:hover { background: rgba(255,255,255,0.2); }
+
+    /* AR Mode toggle */
+    .ar-mode-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 1.5rem;
+      background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.8rem;
+      z-index: 10;
+    }
+
+    .ar-hint {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.5);
+      text-align: center;
+    }
+
+    .ar-toggle-row {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .toggle-btn {
+      padding: 0.5rem 1.2rem;
+      border-radius: 100px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: transparent;
+      color: rgba(255,255,255,0.5);
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.2s;
+    }
+    .toggle-btn.active {
+      background: var(--gold);
+      color: var(--dark);
+      border-color: var(--gold);
+      font-weight: 600;
+    }
+
+    /* 3D Preview (model-viewer) */
+    #viewer-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    model-viewer {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      --poster-color: transparent;
+    }
+
+    /* Marker AR Scene */
+    #ar-scene-container {
+      display: none;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ────── ADMIN PANEL ────── */
+    #admin-toggle {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--muted);
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+      transition: all 0.2s;
+    }
+    #admin-toggle:hover { background: rgba(255,255,255,0.1); }
+
+    #admin-panel {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 900;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      align-items: flex-end;
+      justify-content: center;
+    }
+    #admin-panel.open { display: flex; }
+
+    .admin-sheet {
+      background: #141414;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px 20px 0 0;
+      width: 100%;
+      max-width: 600px;
+      max-height: 88vh;
+      overflow-y: auto;
+      padding: 2rem;
+    }
+
+    .admin-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .admin-sub {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 2rem;
+    }
+
+    .form-group { margin-bottom: 1.2rem; }
+
+    label {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+      letter-spacing: 0.05em;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      background: #1e1e1e;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 0.65rem 0.9rem;
+      font-size: 0.88rem;
+      font-family: 'DM Sans', sans-serif;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: rgba(201,168,76,0.4);
+    }
+    select option { background: #1e1e1e; }
+
+    textarea { resize: vertical; min-height: 70px; }
+
+    .btn-primary {
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--gold);
+      color: var(--dark);
+      border: none;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: background 0.2s;
+      margin-top: 0.5rem;
+    }
+    .btn-primary:hover { background: var(--gold-light); }
+
+    .btn-secondary {
+      width: 100%;
+      padding: 0.65rem;
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      margin-top: 0.5rem;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+
+    .item-list-admin {
+      margin-top: 2rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding-top: 1.5rem;
+    }
+
+    .admin-item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.7rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .admin-item-info small { color: var(--muted); font-size: 0.75rem; }
+    .admin-item-info strong { font-size: 0.9rem; }
+
+    .admin-item-actions { display: flex; gap: 0.5rem; }
+
+    .btn-icon {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--muted);
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+    }
+    .btn-icon:hover { background: rgba(255,0,0,0.15); color: #ff5555; border-color: rgba(255,0,0,0.2); }
+    .btn-icon.edit:hover { background: rgba(201,168,76,0.15); color: var(--gold); border-color: rgba(201,168,76,0.3); }
+
+    /* ────── CONFIG MODAL ────── */
+    #config-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 950;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    #config-modal.open { display: flex; }
+
+    .config-box {
+      background: #141414;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 440px;
+      width: 100%;
+    }
+
+    .config-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--gold);
+      color: var(--dark);
+      padding: 0.6rem 1.4rem;
+      border-radius: 100px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 9999;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ────── SCROLL ────── */
+    html { scroll-behavior: smooth; }
+
+    .scroll-cta {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--muted);
+      font-size: 0.82rem;
+      cursor: pointer;
+      text-decoration: none;
+      animation: fadeUp 0.8s 0.4s ease both;
+      transition: color 0.2s;
+    }
+    .scroll-cta:hover { color: var(--gold); }
+
+    .divider {
+      width: 1px;
+      height: 40px;
+      background: linear-gradient(to bottom, transparent, var(--gold), transparent);
+      margin: 0 auto 2rem;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .menu-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Model viewer loading */
+    .model-loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 2px solid rgba(201,168,76,0.2);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .ar-instructions {
+      background: rgba(201,168,76,0.08);
+      border: 1px solid rgba(201,168,76,0.15);
+      border-radius: 10px;
+      padding: 0.8rem 1rem;
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.6);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .marker-info {
+      text-align: center;
+      margin-top: 1rem;
+    }
+    .marker-info a {
+      color: var(--gold);
+      font-size: 0.8rem;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="grain"></div>
+
+<!-- ═══════════════════════════ LANDING ═══════════════════════════ -->
+<section id="landing">
+  <div class="brand-tag" id="brand-tag">✦ AR Menu Experience</div>
+  <h1>Lihat Menu<br>dalam <span>Dimensi 3D</span></h1>
+  <p class="subtitle" id="brand-desc">
+    Arahkan kamera ke marker untuk melihat hidangan favoritmu secara nyata sebelum memesan.
+  </p>
+  <a class="scroll-cta" href="#menu-section">
+    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+    </svg>
+    Lihat Menu
+  </a>
+</section>
+
+<!-- ═══════════════════════════ MENU SECTION ═══════════════════════════ -->
+<section id="menu-section">
+  <p class="section-label">✦ Pilihan Kami</p>
+  <h2 class="section-title" id="restaurant-name">Menu Restoran</h2>
+  <p class="section-desc">Tap item untuk preview 3D, atau scan marker di meja untuk pengalaman AR.</p>
+
+  <div class="category-tabs" id="category-tabs">
+    <button class="tab active" data-cat="all">Semua</button>
+  </div>
+
+  <div class="menu-grid" id="menu-grid">
+    <!-- dynamically rendered -->
+  </div>
+</section>
+
+<!-- ═══════════════════════════ AR MODAL ═══════════════════════════ -->
+<div id="ar-modal">
+  <div class="ar-header">
+    <div class="ar-item-name" id="ar-item-name">Item Name</div>
+    <button class="btn-close" onclick="closeAR()">✕</button>
+  </div>
+
+  <!-- 3D Preview mode -->
+  <div id="viewer-container">
+    <div class="model-loading" id="model-loading">
+      <div class="spinner"></div>
+      <span>Memuat model 3D…</span>
+    </div>
+    <model-viewer
+      id="model-viewer"
+      camera-controls
+      auto-rotate
+      shadow-intensity="1"
+      environment-image="neutral"
+      style="width:100%;height:100vh;"
+    ></model-viewer>
+  </div>
+
+  <!-- Marker AR mode -->
+  <div id="ar-scene-container">
+    <a-scene
+      id="ar-scene"
+      embedded
+      arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+      style="width:100%;height:100vh;"
+      vr-mode-ui="enabled: false"
+    >
+      <a-assets>
+        <a-asset-item id="ar-model-asset" src=""></a-asset-item>
+      </a-assets>
+      <a-marker id="ar-marker" type="pattern" url="assets/markers/hiro.patt">
+        <a-entity
+          id="ar-entity"
+          gltf-model="#ar-model-asset"
+          scale="0.1 0.1 0.1"
+          position="0 0 0"
+          rotation="-90 0 0"
+          animation="property: rotation; to: -90 360 0; loop: true; dur: 8000; easing: linear"
+        ></a-entity>
+      </a-marker>
+      <a-entity camera></a-entity>
+    </a-scene>
+  </div>
+
+  <div class="ar-mode-bar">
+    <div class="ar-toggle-row">
+      <button class="toggle-btn active" id="btn-3d" onclick="setMode('3d')">🔄 Preview 3D</button>
+      <button class="toggle-btn" id="btn-ar" onclick="setMode('ar')">📷 Mode AR (Marker)</button>
+    </div>
+    <div class="ar-hint" id="ar-hint">Putar dan zoom model 3D dengan gesture</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ ADMIN ═══════════════════════════ -->
+<button id="admin-toggle" title="Admin Panel" onclick="toggleAdmin()">⚙</button>
+
+<div id="admin-panel">
+  <div class="admin-sheet">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem">
+      <div>
+        <div class="admin-title">Admin Panel</div>
+        <div class="admin-sub">Kelola menu & konfigurasi restoran</div>
+      </div>
+      <button class="btn-close" style="position:static" onclick="toggleAdmin()">✕</button>
+    </div>
+
+    <button class="btn-secondary" onclick="openConfig()" style="margin-bottom:1.5rem">⚙ Konfigurasi Restoran</button>
+
+    <div class="form-group">
+      <label>Nama Item Menu</label>
+      <input type="text" id="f-name" placeholder="e.g. Nasi Goreng Spesial" />
+    </div>
+    <div class="form-group">
+      <label>Kategori</label>
+      <input type="text" id="f-cat" placeholder="e.g. Makanan Utama, Minuman, Dessert" />
+    </div>
+    <div class="form-group">
+      <label>Deskripsi</label>
+      <textarea id="f-desc" placeholder="Deskripsi singkat menu…"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Harga (Rp)</label>
+      <input type="text" id="f-price" placeholder="e.g. 45.000" />
+    </div>
+    <div class="form-group">
+      <label>URL Gambar Menu</label>
+      <input type="url" id="f-img" placeholder="https://…/foto-menu.jpg" />
+    </div>
+    <div class="form-group">
+      <label>URL Model 3D (.glb / .gltf)</label>
+      <input type="url" id="f-model" placeholder="https://…/model.glb" />
+    </div>
+    <div class="form-group">
+      <label>Marker AR (.patt) — opsional</label>
+      <input type="url" id="f-marker" placeholder="assets/markers/hiro.patt" />
+    </div>
+
+    <button class="btn-primary" id="btn-add" onclick="addItem()">+ Tambah Item Menu</button>
+    <button class="btn-secondary" onclick="exportData()">⬇ Export menu.json</button>
+
+    <div class="item-list-admin" id="item-list-admin">
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:1rem">Daftar Item (tersimpan di LocalStorage)</p>
+      <div id="admin-items"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ CONFIG ═══════════════════════════ -->
+<div id="config-modal">
+  <div class="config-box">
+    <div class="config-title">Konfigurasi Restoran</div>
+    <div class="form-group">
+      <label>Nama Restoran</label>
+      <input type="text" id="cfg-name" placeholder="Nama Restoran Anda" />
+    </div>
+    <div class="form-group">
+      <label>Tagline</label>
+      <input type="text" id="cfg-tagline" placeholder="Slogan pendek" />
+    </div>
+    <div class="form-group">
+      <label>Deskripsi Landing</label>
+      <textarea id="cfg-desc" placeholder="Deskripsi untuk landing page"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Warna Aksen (HEX)</label>
+      <input type="color" id="cfg-color" value="#C9A84C" style="height:40px;padding:4px;" />
+    </div>
+    <button class="btn-primary" onclick="saveConfig()">Simpan Konfigurasi</button>
+    <button class="btn-secondary" onclick="closeConfig()">Batal</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Model Viewer -->
+<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
+<script>
+// ─────────────────────────────────────────────
+//  DATA LAYER — reads from menu.json OR localStorage
+// ─────────────────────────────────────────────
+let menuItems = [];
+let restaurantConfig = {
+  name: 'AR Menu Experience',
+  tagline: '✦ AR Menu Experience',
+  desc: 'Arahkan kamera ke marker untuk melihat hidangan favoritmu secara nyata sebelum memesan.',
+  accent: '#C9A84C'
+};
+
+let currentMode = '3d';
+let editingId = null;
+
+// Load config
+function loadConfig() {
+  try {
+    const c = JSON.parse(localStorage.getItem('ar_config') || '{}');
+    if (c.name) restaurantConfig = { ...restaurantConfig, ...c };
+  } catch(e) {}
+  applyConfig();
+}
+
+function applyConfig() {
+  document.getElementById('restaurant-name').textContent = restaurantConfig.name;
+  document.getElementById('brand-tag').textContent = restaurantConfig.tagline || '✦ AR Menu Experience';
+  document.getElementById('brand-desc').textContent = restaurantConfig.desc;
+  document.documentElement.style.setProperty('--gold', restaurantConfig.accent || '#C9A84C');
+}
+
+// Load menu — first try menu.json, fallback to localStorage
+async function loadMenu() {
+  try {
+    const res = await fetch('menu.json?t=' + Date.now());
+    if (res.ok) {
+      const data = await res.json();
+      if (data.config) restaurantConfig = { ...restaurantConfig, ...data.config };
+      if (Array.isArray(data.items)) menuItems = data.items;
+      applyConfig();
+    }
+  } catch(e) { /* file not found, use localStorage */ }
+
+  if (!menuItems.length) {
+    try {
+      menuItems = JSON.parse(localStorage.getItem('ar_menu') || '[]');
+    } catch(e) { menuItems = []; }
+  }
+
+  if (!menuItems.length) menuItems = getSampleData();
+
+  renderMenu();
+  renderAdminList();
+}
+
+function getSampleData() {
+  return [
+    {
+      id: 'item_1',
+      name: 'Nasi Goreng Spesial',
+      category: 'Makanan Utama',
+      desc: 'Nasi goreng dengan telur mata sapi, ayam crispy, dan sambal ijo khas rumahan.',
+      price: 'Rp 38.000',
+      img: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=600&q=80',
+      model: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
+      marker: 'assets/markers/hiro.patt'
+    },
+    {
+      id: 'item_2',
+      name: 'Sate Ayam Madura',
+      category: 'Makanan Utama',
+      desc: 'Sate ayam dengan bumbu kacang kental, dilengkapi lontong dan acar.',
+      price: 'Rp 45.000',
+      img: 'https://images.unsplash.com/photo-1529563021893-cc83c992d75d?w=600&q=80',
+      model: 'https://modelviewer.dev/shared-assets/models/Horse.glb',
+      marker: 'assets/markers/hiro.patt'
+    },
+    {
+      id: 'item_3',
+      name: 'Es Teh Susu',
+      category: 'Minuman',
+      desc: 'Teh susu segar dengan tapioka premium, tersedia berbagai level gula.',
+      price: 'Rp 18.000',
+      img: 'https://images.unsplash.com/photo-1558857563-c6dd6e61d2c5?w=600&q=80',
+      model: '',
+      marker: 'assets/markers/hiro.patt'
+    },
+    {
+      id: 'item_4',
+      name: 'Klepon Ubi Ungu',
+      category: 'Dessert',
+      desc: 'Klepon dari ubi ungu berisi gula merah, digulung kelapa parut segar.',
+      price: 'Rp 22.000',
+      img: 'https://images.unsplash.com/photo-1541647376583-8934aaf3448a?w=600&q=80',
+      model: '',
+      marker: 'assets/markers/hiro.patt'
+    }
+  ];
+}
+
+// ─────────────────────────────────────────────
+//  RENDER MENU
+// ─────────────────────────────────────────────
+function renderMenu() {
+  const grid = document.getElementById('menu-grid');
+  const tabsEl = document.getElementById('category-tabs');
+  const cats = ['all', ...new Set(menuItems.map(m => m.category).filter(Boolean))];
+
+  // Build tabs
+  tabsEl.innerHTML = cats.map(c =>
+    `<button class="tab${c==='all'?' active':''}" data-cat="${c}" onclick="filterCat('${c}',this)">${c==='all'?'Semua':c}</button>`
+  ).join('');
+
+  // Build cards
+  grid.innerHTML = menuItems.map(item => `
+    <div class="menu-card" data-cat="${item.category || ''}" id="card-${item.id}">
+      <div class="card-img">
+        ${item.img
+          ? `<img src="${item.img}" alt="${item.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+          : ''}
+        <div class="no-img-placeholder" style="display:${item.img?'none':'flex'}">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+          <span>Tambah Foto</span>
+        </div>
+        ${item.model ? '<span class="ar-badge">3D AR</span>' : ''}
+      </div>
+      <div class="card-body">
+        <div class="card-cat">${item.category || 'Menu'}</div>
+        <div class="card-name">${item.name}</div>
+        <div class="card-desc">${item.desc || ''}</div>
+        <div class="card-footer">
+          <div class="card-price">${item.price || ''}</div>
+          <button class="btn-ar" onclick="openAR('${item.id}')">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            ${item.model ? 'Lihat 3D' : 'Detail'}
+          </button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterCat(cat, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.menu-card').forEach(c => {
+    const match = cat === 'all' || c.dataset.cat === cat;
+    c.classList.toggle('hidden', !match);
+  });
+}
+
+// ─────────────────────────────────────────────
+//  AR MODAL
+// ─────────────────────────────────────────────
+let currentItem = null;
+
+function openAR(id) {
+  currentItem = menuItems.find(m => m.id === id);
+  if (!currentItem) return;
+
+  document.getElementById('ar-item-name').textContent = currentItem.name;
+  document.getElementById('ar-modal').classList.add('open');
+  setMode('3d');
+}
+
+function closeAR() {
+  document.getElementById('ar-modal').classList.remove('open');
+  // Stop AR scene if active
+  const scene = document.getElementById('ar-scene');
+  if (scene && scene.renderer) scene.renderer.dispose();
+  document.getElementById('ar-scene-container').style.display = 'none';
+  document.getElementById('viewer-container').style.display = 'flex';
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  const btn3d = document.getElementById('btn-3d');
+  const btnAR = document.getElementById('btn-ar');
+  const viewer = document.getElementById('viewer-container');
+  const arContainer = document.getElementById('ar-scene-container');
+  const hint = document.getElementById('ar-hint');
+
+  btn3d.classList.toggle('active', mode === '3d');
+  btnAR.classList.toggle('active', mode === 'ar');
+
+  if (mode === '3d') {
+    viewer.style.display = 'flex';
+    arContainer.style.display = 'none';
+    hint.textContent = 'Putar dan zoom model 3D dengan gesture';
+    load3DModel(currentItem);
+  } else {
+    viewer.style.display = 'none';
+    arContainer.style.display = 'block';
+    hint.textContent = 'Arahkan kamera ke marker Hiro untuk melihat model 3D';
+    loadARScene(currentItem);
+  }
+}
+
+function load3DModel(item) {
+  const mv = document.getElementById('model-viewer');
+  const loading = document.getElementById('model-loading');
+
+  if (!item.model) {
+    loading.innerHTML = `
+      <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1" style="opacity:.3;color:#888"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      <span style="color:#555;font-size:.82rem">Model 3D belum ditambahkan</span>
+      <span style="color:#444;font-size:.75rem">Upload file .glb dan tambahkan URL-nya melalui Admin Panel</span>
+    `;
+    loading.style.display = 'flex';
+    mv.style.display = 'none';
+    return;
+  }
+
+  loading.style.display = 'flex';
+  loading.innerHTML = '<div class="spinner"></div><span>Memuat model 3D…</span>';
+  mv.style.display = 'block';
+  mv.src = item.model;
+
+  mv.addEventListener('load', () => { loading.style.display = 'none'; }, { once: true });
+  mv.addEventListener('error', () => {
+    loading.innerHTML = '<span style="color:#ff5555">Gagal memuat model.</span>';
+  }, { once: true });
+}
+
+function loadARScene(item) {
+  if (!item.model) return;
+  const asset = document.getElementById('ar-model-asset');
+  const entity = document.getElementById('ar-entity');
+  asset.setAttribute('src', item.model);
+  entity.setAttribute('gltf-model', '#ar-model-asset');
+
+  const marker = document.getElementById('ar-marker');
+  if (item.marker) marker.setAttribute('url', item.marker);
+}
+
+// ─────────────────────────────────────────────
+//  ADMIN — Add / Edit / Delete
+// ─────────────────────────────────────────────
+function toggleAdmin() {
+  const p = document.getElementById('admin-panel');
+  p.classList.toggle('open');
+  renderAdminList();
+}
+
+function addItem() {
+  const name   = document.getElementById('f-name').value.trim();
+  const cat    = document.getElementById('f-cat').value.trim();
+  const desc   = document.getElementById('f-desc').value.trim();
+  const price  = document.getElementById('f-price').value.trim();
+  const img    = document.getElementById('f-img').value.trim();
+  const model  = document.getElementById('f-model').value.trim();
+  const marker = document.getElementById('f-marker').value.trim() || 'assets/markers/hiro.patt';
+
+  if (!name) { showToast('Nama item wajib diisi!'); return; }
+
+  if (editingId) {
+    const idx = menuItems.findIndex(m => m.id === editingId);
+    if (idx > -1) menuItems[idx] = { ...menuItems[idx], name, category: cat, desc, price, img, model, marker };
+    editingId = null;
+    document.getElementById('btn-add').textContent = '+ Tambah Item Menu';
+  } else {
+    menuItems.push({ id: 'item_' + Date.now(), name, category: cat, desc, price, img, model, marker });
+  }
+
+  saveToStorage();
+  renderMenu();
+  renderAdminList();
+  clearForm();
+  showToast('✓ Item berhasil disimpan');
+}
+
+function deleteItem(id) {
+  menuItems = menuItems.filter(m => m.id !== id);
+  saveToStorage();
+  renderMenu();
+  renderAdminList();
+  showToast('Item dihapus');
+}
+
+function editItem(id) {
+  const item = menuItems.find(m => m.id === id);
+  if (!item) return;
+  editingId = id;
+  document.getElementById('f-name').value   = item.name || '';
+  document.getElementById('f-cat').value    = item.category || '';
+  document.getElementById('f-desc').value   = item.desc || '';
+  document.getElementById('f-price').value  = item.price || '';
+  document.getElementById('f-img').value    = item.img || '';
+  document.getElementById('f-model').value  = item.model || '';
+  document.getElementById('f-marker').value = item.marker || '';
+  document.getElementById('btn-add').textContent = '💾 Simpan Perubahan';
+  document.querySelector('.admin-sheet').scrollTop = 0;
+}
+
+function clearForm() {
+  ['f-name','f-cat','f-desc','f-price','f-img','f-model','f-marker'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  editingId = null;
+}
+
+function renderAdminList() {
+  const el = document.getElementById('admin-items');
+  if (!menuItems.length) { el.innerHTML = '<p style="color:#444;font-size:.8rem">Belum ada item</p>'; return; }
+  el.innerHTML = menuItems.map(item => `
+    <div class="admin-item-row">
+      <div class="admin-item-info">
+        <strong>${item.name}</strong><br>
+        <small>${item.category || '—'} · ${item.price || '—'} ${item.model ? '· 3D ✓' : ''}</small>
+      </div>
+      <div class="admin-item-actions">
+        <button class="btn-icon edit" title="Edit" onclick="editItem('${item.id}')">✏</button>
+        <button class="btn-icon" title="Hapus" onclick="deleteItem('${item.id}')">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ─────────────────────────────────────────────
+//  CONFIG
+// ─────────────────────────────────────────────
+function openConfig() {
+  document.getElementById('cfg-name').value    = restaurantConfig.name || '';
+  document.getElementById('cfg-tagline').value = restaurantConfig.tagline || '';
+  document.getElementById('cfg-desc').value    = restaurantConfig.desc || '';
+  document.getElementById('cfg-color').value   = restaurantConfig.accent || '#C9A84C';
+  document.getElementById('config-modal').classList.add('open');
+}
+function closeConfig() {
+  document.getElementById('config-modal').classList.remove('open');
+}
+function saveConfig() {
+  restaurantConfig.name    = document.getElementById('cfg-name').value.trim() || restaurantConfig.name;
+  restaurantConfig.tagline = document.getElementById('cfg-tagline').value.trim() || restaurantConfig.tagline;
+  restaurantConfig.desc    = document.getElementById('cfg-desc').value.trim() || restaurantConfig.desc;
+  restaurantConfig.accent  = document.getElementById('cfg-color').value;
+  localStorage.setItem('ar_config', JSON.stringify(restaurantConfig));
+  applyConfig();
+  closeConfig();
+  showToast('✓ Konfigurasi tersimpan');
+}
+
+// ─────────────────────────────────────────────
+//  STORAGE & EXPORT
+// ─────────────────────────────────────────────
+function saveToStorage() {
+  localStorage.setItem('ar_menu', JSON.stringify(menuItems));
+}
+
+function exportData() {
+  const data = {
+    config: restaurantConfig,
+    items: menuItems
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'menu.json';
+  a.click();
+  showToast('⬇ menu.json diunduh');
+}
+
+// ─────────────────────────────────────────────
+//  TOAST
+// ─────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// ─────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────
+loadConfig();
+loadMenu();
+</script>
+</body>
+</html>
