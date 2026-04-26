@@ -45,6 +45,36 @@
       "img": "https://images.unsplash.com/photo-1541647376583-8934aaf3448a?w=600&q=80",
       "model": "assets/models/klepon.glb",
       "marker": "assets/markers/hiro.patt"
+    },
+    {
+      "id": "item_5",
+      "name": "Ice Cappucino",
+      "category": "Minuman",
+      "desc": "Kopi Cappucino dengan es.",
+      "price": "Rp 15.000",
+      "img": "https://images.unsplash.com/photo-1541647376583-8934aaf3448a?w=600&q=80",
+      "model": "assets/models/cup_of_cappuccino.glb",
+      "marker": "assets/markers/hiro.patt"
+    },
+    {
+      "id": "item_6",
+      "name": "Pizza",
+      "category": "Makanan Utama",
+      "desc": "Olahan dari tepung yang lembut dengan proses pembakaran kayu yang masih alami khas Italia.",
+      "price": "Rp 15.000",
+      "img": "https://images.unsplash.com/photo-1541647376583-8934aaf3448a?w=600&q=80",
+      "model": "assets/models/pizza.glb",
+      "marker": "assets/markers/hiro.patt"
+    },
+    {
+      "id": "item_7",
+      "name": "Ice Cappucino",
+      "category": "Minuman",
+      "desc": "Dibuat dengan air panas dan diambil dari biji kopi pilihan .",
+      "price": "Rp 15.000",
+      "img": "https://images.unsplash.com/photo-1541647376583-8934aaf3448a?w=600&q=80",
+      "model": "assets/models/coffe_cafe.glb",
+      "marker": "assets/markers/hiro.patt"
     }
   ]
 }
